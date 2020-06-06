@@ -1,0 +1,57 @@
+@startuml
+class GameFlow {
+  +int scene
+
+  +void change_scene(int sc)
+}
+
+class SaveData {
+  -int[][][] ranks
+
+  -void read_cookie()
+  -void write_cookie()
+  +void init_data()
+  +int[][] get_ranks(int type)
+  +int[] gets_options()
+  +void save_ranks(int type, int rs[][])
+  +void save_options(int op[])
+}
+
+class ValueMove {
+
+}
+
+class GameStats {
+
+}
+
+class Title {
+  -void init_title()
+  -void move_options()
+  -void move_countdown()
+  +void show_title()
+}
+
+class Options {
+  -void move_title()
+  +void show_options()
+}
+
+class CountDown {
+  -void init_countdown()
+  -void move_game()
+  +void show_countdown()
+}
+
+class InGame {
+  -void init_game()
+  -void move_result()
+  +void show_game()
+}
+
+class Result {
+  -void move_title()
+  -void move_countdown()
+  +void show_result()
+}
+@enduml
