@@ -25,7 +25,7 @@ class CountDown {
 
 class InGame {
   -void init_game()
-  -void move_result()
+  -void move_result(GameStats gs)
   +void show_game()
 }
 
@@ -56,7 +56,15 @@ class ValueMove {
 }
 
 class GameStats {
+  -int money
+  -int amount
+  -int[] vals
 
+  +void change_money(int n)
+  +int get_money()
+  +void change_amount(int n)
+  +int get_amount()
+  +int get_curval(int n)
 }
 
 class Times {
@@ -66,4 +74,11 @@ class Times {
   +long get_elapsed() #現在のUNIX時間 - start_time
   +int[] get_curtime() #現在の年~分を取得
 }
+
+ValueMove ..|> InGame
+Times ..|> CountDown
+Times ..|> InGame
+GameStats ..|> InGame
+SaveData ..|> Options
+SaveData ..|> Result
 @enduml
