@@ -75,6 +75,10 @@ class Times {
   +int[] get_curtime() #現在の年~分を取得
 }
 
+class WindowSize {
+  +void fitCanvas()
+}
+
 ValueMove ..|> InGame
 Times ..|> CountDown
 Times ..|> InGame
