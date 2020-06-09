@@ -61,7 +61,7 @@ class WindowSize {
 //=======================================================================
 
 const gf = new GameFlow();
-const tl = new Title();
+const tt = new Title();
 const op = new Options();
 const cd = new CountDown();
 const gm = new InGame();
