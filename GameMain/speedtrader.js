@@ -6,6 +6,12 @@ function show_text(txt, size, w, h) {
   ctx.font = size+"px Arial";
   ctx.fillText(txt, w, h);
 }
+function show_text_left(txt, size, x, y) {
+  ctx.textAlign = "left";
+  ctx.font = size+"px Arial";
+  ctx.fillText(txt, x, y);
+  ctx.textAlign = "center";
+}
 
 function getMousePosition(evt) {
   let rect = canvas.getBoundingClientRect();
@@ -13,6 +19,19 @@ function getMousePosition(evt) {
     x: evt.clientX - rect.left,
     y: evt.clientY - rect.top
   };
+}
+
+function can_w(mag) {
+  return canvas.width*mag;
+}
+function can_h(mag) {
+  return canvas.height*mag;
+}
+function strokeRect_ar(ar) {
+  ctx.strokeRect(ar[0], ar[1], ar[2], ar[3]);
+}
+function fillRect_ar(ar) {
+  ctx.fillRect(ar[0], ar[1], ar[2], ar[3]);
 }
 
 class GameFlow {
@@ -159,7 +178,11 @@ class InGame {
   mode;
   get_tm; end_cd; times;
   vals_ord; vals_period;
-  button_x; button_y; button_dx; button_dy; button_w; button_h;
+  button_x; button_y; button_dx; button_dy; button_w; button_h; button_able; button_val;
+  pos_sjk; //[lx, uy, dx, dy] 
+  pos_sjm; // :
+  pos_ipt; // :
+  pos_val; // :
   constructor() {
     this.get_tm = false;
     this.end_cd = true;
@@ -167,10 +190,26 @@ class InGame {
     this.vals_period = [0,0,0,0];
     this.button_x = new Array(4);
     this.button_y = new Array(4);
+    this.button_able = new Array(4);
+    this.button_val = new Array(4);
     for(let i = 0; i < 4; i++) {
       this.button_x[i] = new Array(3);
       this.button_y[i] = new Array(3);
+      this.button_able[i] = new Array(3).fill(true);
+      this.button_val[i] = new Array(3);
     }
+    for(let i = 1; i < 4; i++) {
+      for(let j = 0; j < 3; j++) {
+        this.button_val[i][j] = 1+(i-1)*3+j;
+      }
+    }
+    this.button_val[0][0] = -1;
+    this.button_val[0][1] = 0;
+    this.button_val[0][2] = 10;
+    this.pos_sjk = new Array(4);
+    this.pos_sjm = new Array(4);
+    this.pos_ipt = new Array(4);
+    this.pos_val = new Array(4);
   }
 
   shuffle(ar) {
@@ -204,16 +243,16 @@ class InGame {
     this.vals_ord = this.shuffle(this.vals_ord);
   }
 
-  show_game(money, vals) {
+  show_game_base(money, vals) {
     if(this.mode == 1) {
       show_text(":)", 24, canvas.width/2, canvas.height/2);
     } else if(this.mode == 2) {
       show_text(":(", 24, canvas.width/2, canvas.height/2);
     }
-    this.button_dx = canvas.width/20;
-    this.button_dy = canvas.height/4;
-    this.button_w = canvas.width/6;
-    this.button_h = canvas.height/6;
+    this.button_dx = canvas.width/30;
+    this.button_dy = canvas.height-this.button_dx-this.button_h*4;
+    this.button_w = canvas.width/8;
+    this.button_h = canvas.height/8;
     for(let i = 0; i < 4; i++) {
       for(let j = 0; j < 3; j++) {
         this.button_x[i][j] = this.button_dx + this.button_w*j;
@@ -242,8 +281,60 @@ class InGame {
     show_text(0, numsize, this.button_x[0][1]+this.button_w/2, this.button_y[0][1]+this.button_h*7.0/10);
     show_text("00", numsize, this.button_x[0][2]+this.button_w/2, this.button_y[0][2]+this.button_h*7.0/10);
     
-    
+    let txtsjk = "所持カブ";
+    let sizesjk = canvas.width/txtcl.length/8.0;
+    show_text(txtsjk, sizesjk, canvas.width*3.5/30, canvas.height*3.0/30);
+    this.pos_sjk = [can_w(1.0/30), can_h(3.5/30), can_w(11.0/30), can_h(3.0/30)];
+    strokeRect_ar(this.pos_sjk);
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(this.pos_sjk);
 
+    ctx.fillStyle = "#000000";
+    let txtsjm = "所持金";
+    let sizesjm = canvas.width/txtcl.length/8.0;
+    show_text(txtsjm, sizesjm, canvas.width*15.5/30, canvas.height*3.0/30);
+    this.pos_sjm = [can_w(13.5/30), can_h(3.5/30), can_w(11.0/30), can_h(3.0/30)];
+    strokeRect_ar(this.pos_sjm);
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(this.pos_sjm);
+
+    ctx.fillStyle = "#000000";
+    let txtipt = "個数入力";
+    let sizeipt = canvas.width/txtcl.length/8.0;
+    show_text(txtipt, sizeipt, canvas.width*3.5/30, canvas.height*8.5/30);
+    this.pos_ipt = [can_w(1.0/30), can_h(9.0/30), can_w(8.0/30), can_h(3.0/30)];
+    strokeRect_ar(this.pos_ipt);
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(this.pos_ipt);
+
+    ctx.fillStyle = "#000000";
+    let txtcrs = "×";
+    let sizecrs = canvas.width/15.0;
+    show_text(txtcrs, sizecrs, canvas.width*9.75/30, canvas.height*11.5/30);
+
+    let txtval = "カブ価";
+    let sizeval = canvas.width/txtcl.length/8.0;
+    show_text(txtval, sizeval, canvas.width*12.25/30, canvas.height*8.5/30);
+    this.pos_val = [can_w(10.5/30), can_h(9.0/30), can_w(8.0/30), can_h(3.0/30)];
+    strokeRect_ar(this.pos_val);
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(this.pos_val);
+
+    ctx.fillStyle = "#000000";
+    let txteq = "=";
+    let sizeeq = canvas.width/15.0;
+    show_text(txteq, sizeeq, canvas.width*19.25/30, canvas.height*11.5/30);
+  
+    let pos_pay = [can_w(20.0/30), can_h(9.0/30), can_w(8.0/30), can_h(3.0/30)];
+    strokeRect_ar(pos_pay);
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(pos_pay);
+  }
+
+  show_inputs(n) {
+    ctx.fillStyle = "#000000";
+    let size = canvas.width/20.0;
+    show_text_left(n, size, can_w(1.5/30), can_w(8.5/30));
   }
 }
 
@@ -431,15 +522,26 @@ class ValueMove {
 
 class GameStats {
   money;
+  inputs;
   amount;
   vals;
   constructor(){
     this.money = 0;
+    this.inputs = 0;
     this.amount = 0;
     this.vals = new Array();
   }
   change_money(n){
     this.money = n;
+  }
+  reci_num(n) {
+    if(0 <= n && n <= 9) {
+      this.inputs = this.inputs*10+n;
+    } else if(n == 10) {
+      this.inputs = this.inputs*100;
+    } else if(n == -1) {
+      this.inputs = 0;
+    }
   }
   change_amount(n){
     this.amount = n;
@@ -451,6 +553,9 @@ class GameStats {
   }
   get_money(){
     return this.money;
+  }
+  get_inputs() {
+    return this.inputs;
   }
   get_amount(){
     return this.amount;
@@ -549,8 +654,34 @@ function move_game() {
 }
 
 function while_game() {
-
+  gm.show_game_base();
+  canvas.addEventListener("click", function(evt) {
+    for(let i = 0; i < 4; i++) {
+      for(let j = 0; j < 3; j++) {
+        var pos = getMousePosition(evt);
+        if(gm.button_x[i][j] <= pos.x && pos.x <= gm.button_x[i][j]+gm.button_w && 
+          gm.button_y[i][j] <= pos.y && pos.y <= gm.button_y[i][j]+gm.button_h && gm.button_able[i][j]) {
+          st.reci_num(gm.button_val[i][j]);
+          gm.button_able[i][j] = false;
+          console.log(st.inputs);
+        }
+      }
+    }
+  }, false);
+  canvas.addEventListener("mouseup", function(evt) {
+    for(let i = 0; i < 4; i++) {
+      for(let j = 0; j < 3; j++) {
+        var pos = getMousePosition(evt);
+        if(gm.button_x[i][j] <= pos.x && pos.x <= gm.button_x[i][j]+gm.button_w && 
+          gm.button_y[i][j] <= pos.y && pos.y <= gm.button_y[i][j]+gm.button_h && gm.button_able[i][j]) {
+          gm.button_able[i][j] = true;
+        }
+      }
+    }
+  }, false);
+  gm.show_inputs(st.get_inputs());
 }
+
 function move_result() {
   if(gm.end_cd == true) {
     gf.scene = 5;
@@ -610,7 +741,6 @@ function draw() {
       gf.show_back_title();
     }
     while_game();
-    gm.show_game();
     move_result();
 
   } else {
