@@ -36,8 +36,10 @@ function fillRect_ar(ar) {
 
 class GameFlow {
   scene; // Title 1, Options 2, Countdown 3, InGame 4, Result 5
+  cookie_able;
   constructor() {
     this.scene = 1;
+    history.cookie_able = true;
   }
 
   get get_scene() {
@@ -178,6 +180,9 @@ class InGame {
   mode;
   get_tm; end_cd; times;
   button_x; button_y; button_dx; button_dy; button_w; button_h; button_able; button_val;
+  back_title;                    //           [lx, uy, dx, dy]
+  button_buy; button_buy_able;   //button_buy   :
+  button_sell; button_sell_able; //buttonsell   :
   pos_sjk; //[lx, uy, dx, dy] 
   pos_sjm; // :
   pos_ipt; // :
@@ -195,8 +200,6 @@ class InGame {
       this.button_y[i] = new Array(3);
       this.button_able[i] = new Array(3).fill(true);
       this.button_val[i] = new Array(3);
-    }
-    for(let i = 1; i < 4; i++) {
       for(let j = 0; j < 3; j++) {
         this.button_val[i][j] = 1+(i-1)*3+j;
       }
@@ -204,6 +207,11 @@ class InGame {
     this.button_val[0][0] = -1;
     this.button_val[0][1] = 0;
     this.button_val[0][2] = 10;
+    this.back_title = new Array(4);
+    this.button_buy = new Array(4);
+    this.button_buy_able = true;
+    this.button_sell = new Array(4);
+    this.button_sell_able = true;
     this.pos_sjk = new Array(4);
     this.pos_sjm = new Array(4);
     this.pos_ipt = new Array(4);
@@ -227,7 +235,20 @@ class InGame {
   }
 
   show_back_title() {
-
+    this.back_title[0] = can_w(25.0/30);
+    this.back_title[1] = can_h(0.5/30);
+    this.back_title[2] = can_w(4.5/30);
+    this.back_title[3] = can_h(5.0/30);
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(this.back_title);
+    ctx.strokeStyle = "#000000";
+    strokeRect_ar(this.back_title);
+    ctx.fillStyle = "#000000";
+    let txts = ["セーブし", "タイトル", "へ戻る"];
+    let size = canvas.width/8.0/txts[0].length;
+    for(let i = 0; i < 3; i++) {
+      show_text_left(txts[i], size, can_w(25.25/30), can_h((1.75+i*1.5)/30));
+    }
   }
 
   show_buttons() {
@@ -244,11 +265,7 @@ class InGame {
     ctx.strokeStyle = "#000000";
     for(let i = 0; i < 4; i++) {
       for(let j = 0; j < 3; j++) {
-        if(this.button_able[i][j]) {
-          ctx.fillStyle = "#FFFFFF";
-        } else {
-          ctx.fillStyle = "#888888";
-        }
+        ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(this.button_x[i][j], this.button_y[i][j], this.button_w, this.button_h);
         ctx.strokeRect(this.button_x[i][j], this.button_y[i][j], this.button_w, this.button_h);
       }
@@ -265,9 +282,31 @@ class InGame {
     let sizecl = can_w(1)/txtcl.length/10.0;
     show_text(txtcl, sizecl, this.button_x[0][0]+this.button_w/2, this.button_y[0][0]+this.button_h*6.0/10);
     show_text(0, numsize, this.button_x[0][1]+this.button_w/2, this.button_y[0][1]+this.button_h*7.0/10);
-    show_text("00", numsize, this.button_x[0][2]+this.button_w/2, this.button_y[0][2]+this.button_h*7.0/10);    
+    show_text("00", numsize, this.button_x[0][2]+this.button_w/2, this.button_y[0][2]+this.button_h*7.0/10);
+    
+    this.button_buy = [can_w(15.0/30), can_h(13.75/30), can_w(7.0/30), can_h(5.0/30)];
+    this.button_sell = [this.button_buy[0]+this.button_buy[2], this.button_buy[1], 
+                        this.button_buy[2], this.button_buy[3]];
+    if(this.button_buy_able) {ctx.fillStyle = "#FFFFFF";} else {ctx.fillStyle = "#BBBBBB";}
+    fillRect_ar(this.button_buy);
+    if(this.button_sell_able) {ctx.fillStyle = "#FFFFFF";} else {ctx.fillStyle = "#BBBBBB";}
+    fillRect_ar(this.button_sell);
+    ctx.strokeStyle = "#000000";
+    strokeRect_ar(this.button_buy);
+    strokeRect_ar(this.button_sell);
+
+    ctx.fillStyle = "#000000";
+    let txtkabu = "カブを";
+    let sizekabu = can_w(1)/txtkabu.length/10.0;
+    let txtbs = ["買う", "売る"];
+    let sizebs = can_w(1)/txtbs[0].length/7.5;
+    show_text(txtkabu, sizekabu, this.button_buy[0]+this.button_buy[2]/2, can_h(15.25/30));
+    show_text(txtkabu, sizekabu, this.button_sell[0]+this.button_sell[2]/2, can_h(15.25/30));
+    show_text(txtbs[0], sizebs, this.button_buy[0]+this.button_buy[2]/2, can_h(18.0/30));
+    show_text(txtbs[1], sizebs, this.button_sell[0]+this.button_sell[2]/2, can_h(18.0/30));
   }
   show_boxes() {
+    ctx.fillStyle = "#000000"
     let txtsjk = "所持カブ";
     let size_boxside =  canvas.width/txtsjk.length/6.0;  //show_boxes内のテキストサイズ
     show_text(txtsjk, size_boxside, canvas.width*3.5/30, canvas.height*3.0/30);
@@ -314,13 +353,7 @@ class InGame {
     ctx.fillStyle = "#FFFFFF";
     fillRect_ar(pos_pay);
   }
-  show_game_base(money, vals) {
-    if(this.mode == 1) {
-      show_text(":)", 24, can_w(1.0/2), can_h(1.0/2));
-    } else if(this.mode == 2) {
-      show_text(":(", 24, can_w(1.0/2), can_h(1.0/2));
-    }
-    
+  show_game_base() {
     this.show_buttons();
     this.show_boxes();
   }
@@ -381,33 +414,35 @@ class SaveData {
   }
 
   init_data(){
-    this.write_cookie("scores","");
-    this.write_cookie("dates","");
+    let b1 = this.write_cookie("scores","");
+    let b2 = this.write_cookie("dates","");
+    let b3 = this.write_cookie("options", "");
+    return b1 && b2 && b3;
   }
 
   get_ranks(){
-    var gotrank = new Array();
     var scores = this.read_cookie("scores");
     var dates = this.read_cookie("dates");
     scores = scores.split(",");
-    dates = date.split(",");
-    for(var i=0;i<scores.length;i++){
-      gotrank[i][0] = scores[i];
-      gotrank[i][1] = dates[i];
+    dates = dates.split(",");
+    var gotrank = new Array(4);    
+    for(var i=0;i<4;i++) {
+      gotrank[i] = new Array(2);
+      gotrank[i][0] = Number(scores[i]);
+      gotrank[i][1] = Number(dates[i]);
     }
 
     return gotrank;
   }
   get_options(){
     var gotopt = this.read_cookie("options");
-    gotopt = gotopt.split(",");
-    return gotopt;
+    return Number(gotopt);
   }
 
   save_ranks(rs){
     var sav_score="";
     var sav_date="";
-    for(var i=0; i<rs[0].length; i++){
+    for(var i=0; i<4; i++){
       sav_score += ""+rs[i][0];
       sav_date  += ""+rs[i][1];
       if(i!=rs[0].length-1){sav_score += ",";sav_date += ",";}
@@ -416,12 +451,7 @@ class SaveData {
     this.write_cookie("dates",sav_date);
   }
   save_options(op){
-    var sav_opts="";
-    for(var i=0;i<op.length;i++){
-      sav_opts=""+op;
-      if(i!=op.length-1)sav_opts += ",";
-    }
-    this.write_cookie("options",sav_opts);
+    this.write_cookie("options", ""+op);
   }
 }
 
@@ -519,6 +549,7 @@ class GameStats {
   money;
   inputs;
   amount;
+  cost;
   vals; vals_chg;
   vals_ord_chg; vals_ord;
   constructor(){
@@ -557,6 +588,9 @@ class GameStats {
   change_amount(n){
     this.amount = n;
   }
+  change_cost(n) {
+    this.cost = n;
+  }
   change_curval(n){
     for(var i=0;i<n.length;i++){
       this.vals[i] = n[i];
@@ -573,6 +607,9 @@ class GameStats {
   get_amount(){
     return this.amount;
   }
+  get_cost() {
+    return this.cost;
+  } 
   get_curval(n){
     return this.vals[n];
   }
@@ -613,7 +650,7 @@ function move_options() {
   canvas.addEventListener("click", function(evt) {
     var pos = getMousePosition(evt);
     if(tt.oplx <= pos.x && pos.x <= tt.oplx+canvas.width*tt.opdx/10 && 
-      tt.opuy <= pos.y && pos.y <= tt.opuy+canvas.height*tt.opdy/10) {
+      tt.opuy <= pos.y && pos.y <= tt.opuy+canvas.height*tt.opdy/10 && gf.scene == 1) {
       gf.scene = 2;
     } 
   }, false);
@@ -622,7 +659,7 @@ function move_countdown() {
   canvas.addEventListener("click", function(evt) {
     var pos = getMousePosition(evt);
     if(tt.cdlx <= pos.x && pos.x <= tt.cdlx+canvas.width*tt.cddx/10 && 
-      tt.cduy <= pos.y && pos.y <= tt.cduy+canvas.height*tt.cddy/10) {
+      tt.cduy <= pos.y && pos.y <= tt.cduy+canvas.height*tt.cddy/10 && gf.scene == 1) {
       gf.scene = 3;
       cd.set_get_tm(true);
       cd.end_cd = false;
@@ -634,7 +671,7 @@ function move_title() {
   canvas.addEventListener("click", function(evt) {
     var pos = getMousePosition(evt);
     if(op.ttlx <= pos.x && pos.x <= op.ttlx+canvas.width*op.ttdx/10 && 
-      op.ttuy <= pos.y && pos.y <= op.ttuy+canvas.height*op.ttdy/10) {
+      op.ttuy <= pos.y && pos.y <= op.ttuy+canvas.height*op.ttdy/10 && gf.scene == 2) {
       gf.scene = 1;
       sv.save_options(op.mode);
     } 
@@ -644,11 +681,10 @@ function change_options_move_title() {
   canvas.addEventListener("click", function(evt) {
     var pos = getMousePosition(evt);
     if(op.optlx <= pos.x && pos.x <= op.optlx+canvas.width*op.optdx/10 && 
-      op.optuy <= pos.y && pos.y <= op.optuy+canvas.height*op.optdy/10 && ch_opt) {
+      op.optuy <= pos.y && pos.y <= op.optuy+canvas.height*op.optdy/10 && ch_opt && gf.scene == 2) {
       ch_opt = false;
       op.mode = (op.mode % 2) + 1;
       gf.scene = 1;
-      console.log(op.mode);
       sv.save_options(op.mode);
     } 
   }, false);
@@ -662,6 +698,12 @@ function move_game() {
     gm.set_mode(op.mode);
     gm.set_get_tm(true);
     gm.end_cd = false;
+    if(gm.mode == 1) {
+      st.change_money(500);
+    } else if(gm.mode == 2) {
+      st.change_money(sv.get_ranks()[3][0]);
+      st.change_amount(sv.get_ranks()[3][1]);
+    }
   }
 }
 
@@ -685,9 +727,39 @@ function while_game() {
   }
 
   let stepid = Math.floor(msec%15.0*12.0/15.0);
-  let calc_mon =  st.get_inputs() * st.get_curval(stepid);
+  st.change_cost(st.get_inputs() * st.get_curval(stepid));
   gm.show_game_base();
-  gm.show_stats(st.get_amount(), st.get_money(), st.get_inputs(), st.get_curval(stepid), calc_mon);
+  gm.show_stats(st.get_amount(), st.get_money(), st.get_inputs(), st.get_curval(stepid), st.get_cost());
+
+  if(st.get_money() < st.get_cost()) {
+    gm.button_buy_able = false;
+  } else {
+    gm.button_buy_able = true;
+  }
+  if(st.get_amount() < st.get_inputs()) {
+    gm.button_sell_able = false;
+  } else {
+    gm.button_sell_able = true;
+  }
+  //売買ボタンクリック
+  canvas.addEventListener("click", function(evt) {
+    var pos = getMousePosition(evt);
+    if(gm.button_buy[0] <= pos.x && pos.x <= gm.button_buy[0]+gm.button_buy[2] && 
+      gm.button_buy[1] <= pos.y && pos.y <= gm.button_buy[1]+gm.button_buy[3] && gm.button_buy_able) {
+        st.change_money(st.get_money() - st.get_cost());
+        st.change_amount(st.get_amount() + st.get_inputs());
+        st.change_inputs(-1);
+        gm.button_buy_able = false;
+    }
+  }, false);
+  canvas.addEventListener("mouseup", function(evt) {
+    var pos = getMousePosition(evt);
+    if(gm.button_buy[0] <= pos.x && pos.x <= gm.button_buy[0]+gm.button_buy[2] && 
+      gm.button_buy[1] <= pos.y && pos.y <= gm.button_buy[1]+gm.button_buy[3] && !gm.button_buy_able) {
+        gm.button_buy_able = true;
+    }
+  }, false);
+  
   //10キーボタンクリック
   canvas.addEventListener("click", function(evt) {
     for(let i = 0; i < 4; i++) {
@@ -714,6 +786,20 @@ function while_game() {
   }, false);
 }
 
+function pause_move_title() {
+  canvas.addEventListener("click", function(evt) {
+    var pos = getMousePosition(evt);
+    if(gm.back_title[0] <= pos.x && pos.x <= gm.back_title[0]+gm.back_title[2] && 
+      gm.back_title[1] <= pos.y && pos.y <= gm.back_title[1]+gm.back_title[3] && gf.scene == 4) {
+      gf.scene = 1;
+      ranks = sv.get_ranks();
+      ranks[3][0] = st.money;
+      ranks[3][1] = st.amount;
+      sv.save_ranks(ranks);
+    }
+  }, false);
+}
+
 function move_result() {
   if(gm.end_cd == true) {
     gf.scene = 5;
@@ -729,12 +815,28 @@ function move_result() {
 
   let opt = sv.get_options();
   if(opt == "nodata") {
-    sv.init_data();
-    sv.save_options(1);
-    opt = 1;
+    console.log("yep");
+    if_cookie_able = sv.init_data();
+    console.log(if_cookie_able);
+    if(if_cookie_able) {
+      let ar = new Array(4);
+      for(let i = 0; i < 4; i++) { ar[i] = new Array(2).fill(0);}
+      ar[3][0] = 500;
+      sv.save_ranks(ar);
+
+      opt = 1;
+      sv.save_options(opt);
+      op.change_mode(opt);
+    } else {
+      gf.cookie_able = false;
+      op.change_mode(1);
+    }
   }
   op.change_mode(opt);
-  
+  if(isNaN(sv.get_options())) {
+    gf.cookie_able = false;
+    op.change_mode(1);
+  }
 }
 
 var ch_opt = false;
@@ -763,14 +865,15 @@ function draw() {
     move_game();
 
   } else if(gf.scene == 4) {
+    if(gm.get_tm) {
+      tm.start_count();
+      gm.set_get_tm(false);
+    }
     if(gm.mode == 1) {
-      if(gm.get_tm) {
-        tm.start_count();
-        gm.set_get_tm(false);
-      }
       gm.show_countdown(tm.get_elapsed());
-    } else if(gf.mode == 2) {
+    } else if(gm.mode == 2) {
       gm.show_back_title();
+      pause_move_title();
     }
     while_game();
     move_result();
