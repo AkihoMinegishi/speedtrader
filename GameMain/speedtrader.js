@@ -685,7 +685,7 @@ function change_options_move_title() {
   canvas.addEventListener("click", function(evt) {
     var pos = getMousePosition(evt);
     if(op.optlx <= pos.x && pos.x <= op.optlx+canvas.width*op.optdx/10 && 
-      op.optuy <= pos.y && pos.y <= op.optuy+canvas.height*op.optdy/10 && ch_opt && gf.scene == 2) {
+      op.optuy <= pos.y && pos.y <= op.optuy+canvas.height*op.optdy/10 && gf.scene == 2) {
       ch_opt = false;
       op.mode = (op.mode % 2) + 1;
       gf.scene = 1;
@@ -861,14 +861,11 @@ function move_result() {
   }
 }
 
-var ch_opt = false;
-
 function draw() {
   ws.fitCanvas();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if(gf.scene == 1) {
-    ch_opt = true;
     tt.show_title(op.mode);
     move_options();
     move_countdown();
