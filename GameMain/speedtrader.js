@@ -575,6 +575,10 @@ class GameStats {
 
   change_money(n){
     this.money = n;
+    if(n < 0) {
+      alert("Error!");
+      this.money = n;
+    }
   }
   change_inputs(n) {
     if(this.inputs < 10**7 && 0 <= n && n <= 9) {
@@ -757,6 +761,24 @@ function while_game() {
     if(gm.button_buy[0] <= pos.x && pos.x <= gm.button_buy[0]+gm.button_buy[2] && 
       gm.button_buy[1] <= pos.y && pos.y <= gm.button_buy[1]+gm.button_buy[3] && !gm.button_buy_able) {
         gm.button_buy_able = true;
+    }
+  }, false);
+
+  canvas.addEventListener("click", function(evt) {
+    var pos = getMousePosition(evt);
+    if(gm.button_sell[0] <= pos.x && pos.x <= gm.button_sell[0]+gm.button_sell[2] && 
+      gm.button_sell[1] <= pos.y && pos.y <= gm.button_sell[1]+gm.button_sell[3] && gm.button_sell_able) {
+        st.change_money(st.get_money() + st.get_cost());
+        st.change_amount(st.get_amount() - st.get_inputs());
+        st.change_inputs(-1);
+        gm.button_sell_able = false;
+    }
+  }, false);
+  canvas.addEventListener("mouseup", function(evt) {
+    var pos = getMousePosition(evt);
+    if(gm.button_sell[0] <= pos.x && pos.x <= gm.button_sell[0]+gm.button_sell[2] && 
+      gm.button_sell[1] <= pos.y && pos.y <= gm.button_sell[1]+gm.button_sell[3] && !gm.button_sell_able) {
+        gm.button_sell_able = true;
     }
   }, false);
   
