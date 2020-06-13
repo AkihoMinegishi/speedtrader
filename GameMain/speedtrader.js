@@ -81,9 +81,13 @@ class Title {
     this.cduy = canvas.height*5.45/10;
     this.cddy = 0.6;
     show_text(txt2, size2, canvas.width/2, canvas.height*5.9/10);
-    ctx.strokeStyle = "#AAAAAA";
-    ctx.strokeRect(this.cdlx, this.cduy, 
-                  canvas.width*(this.cddx)/10, canvas.height*(this.cddy)/10);
+    let cdar = [this.cdlx, this.cduy, can_w(this.cddx/10), can_h(this.cddy/10)];
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(cdar);
+    ctx.strokeStyle = "#000000";
+    strokeRect_ar(cdar);
+    ctx.fillStyle = "#000000";
+    show_text(txt2, size2, canvas.width/2, canvas.height*5.9/10);
 
     let txt3 = "設定の変更";
     let size3 = canvas.width/5.0/(txt3.length);
@@ -91,10 +95,13 @@ class Title {
     this.opdx = 2.2;
     this.opuy = canvas.height*7.0/10;
     this.opdy = 0.6;
+    let opar = [this.oplx, this.opuy, can_w(this.opdx/10), can_h(this.opdy/10)];
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(opar);
+    ctx.strokeStyle = "#000000";
+    strokeRect_ar(opar);
+    ctx.fillStyle = "#000000";
     show_text(txt3, size3, canvas.width/2, canvas.height*3.0/4);
-    ctx.strokeStyle = "#AAAAAA";
-    ctx.strokeRect(this.oplx, this.opuy, 
-      canvas.width*(this.opdx)/10, canvas.height*(this.opdy)/10);
   }
 }
 
@@ -120,7 +127,18 @@ class Options {
     let size2 = canvas.width/3.75/(txt2.length);
     let txt3 = "エンドレスモード";
     let size3 = canvas.width/3.0/(txt3.length);
+
+    this.optlx = canvas.width*1.5/10;
+    this.optdx = 7.0;
+    this.optuy = canvas.height*6.0/10;
+    this.optdy = 1.1;
+    let optar = [this.optlx, this.optuy, can_w(this.optdx/10), can_h(this.optdy/10)];
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(optar);
+    ctx.strokeStyle = "#000000";
+    strokeRect_ar(optar);
     let txt4 = "モードを「";
+    ctx.fillStyle = "#000000";
     if(this.mode == 1) {
       show_text(txt2, size2, canvas.width*7.0/10, canvas.height/2);
       txt4 += txt3 + "」に切り替えて";
@@ -133,22 +151,19 @@ class Options {
     let txt5 = "タイトルに戻る";
     let size5 = canvas.width/4.0/(txt5.length);
     show_text(txt5, size5, canvas.width/2, canvas.height*7.0/10)
-    this.optlx = canvas.width*1.5/10;
-    this.optdx = 6.8;
-    this.optuy = canvas.height*6.0/10;
-    this.optdy = 1.1;
-    ctx.strokeStyle = "#AAAAAA";
-    ctx.strokeRect(this.optlx, this.optuy, 
-                  canvas.width*(this.optdx)/10, canvas.height*(this.optdy)/10);
+    
 
     this.ttlx = canvas.width*3.7/10;
     this.ttdx = 2.6;
     this.ttuy = canvas.height*8.0/10;
     this.ttdy = 0.6;
+    let ttar = [this.ttlx, this.ttuy, can_w(this.ttdx/10), can_h(this.ttdy/10)];
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(ttar);
+    ctx.strokeStyle = "#000000";
+    strokeRect_ar(ttar);
+    ctx.fillStyle = "#000000";
     show_text(txt5, size5, canvas.width/2, canvas.height*8.5/10);
-    ctx.strokeStyle = "#AAAAAA";
-    ctx.strokeRect(this.ttlx, this.ttuy, 
-                  canvas.width*(this.ttdx)/10, canvas.height*(this.ttdy)/10);
   }
 
   
@@ -371,12 +386,36 @@ class InGame {
 
 class Result {
   score;
+  ranking;
+  back_title; //[lx, uy, dx, dy]
+  constructor() {
+    this.ranking = new Array(4);
+    this.back_title = new Array(4);
+  }
 
   set_score(sc) {
     this.score = sc;
   }
+  set_ranking(ran) {
+    
+  }
   show_result() {
-    show_text(this.score, 24, can_w(1.0/2), can_h(1.0/2));
+    let txts = ["今回のスコア", "タイトルに戻る"];
+    let txtsizes = [4.0, 4.0];
+    for(let i = 0; i < txts.length; i++) {
+      txtsizes[i] = can_w(1)/txtsizes[i]/txts[i].length;
+    }
+    ctx.fillStyle = "#000000";
+    show_text(txts[0], txtsizes[0], can_w(1.0/2), can_h(3.0/30));
+    show_text(this.score, can_w(1.0/10), can_w(1.0/2), can_h(10.0/30));
+
+    this.back_title = [can_w(16.0/30), can_h(26.0/30), can_w(13.0/30), can_h(3.0/30)];
+    ctx.fillStyle = "#FFFFFF";
+    fillRect_ar(this.back_title);
+    ctx.strokeStyle = "#000000";
+    strokeRect_ar(this.back_title);
+    ctx.fillStyle = "#000000";
+    show_text(txts[1], txtsizes[1], can_w(22.5/30), can_h(28.0/30));
   }
 }
 
@@ -474,6 +513,10 @@ class Times {
     ret[3] = date.getHours();
     ret[4] = date.getMinutes();
     return ret;
+  }
+  get_unixtime() {
+    let date = new Date();
+    return date.getTime();
   }
 }
 
@@ -705,8 +748,13 @@ function move_game() {
     if(gm.mode == 1) {
       st.change_money(500);
     } else if(gm.mode == 2) {
-      st.change_money(sv.get_ranks()[3][0]);
-      st.change_amount(sv.get_ranks()[3][1]);
+      if(gf.cookie_able) {
+        st.change_money(sv.get_ranks()[3][0]);
+        st.change_amount(sv.get_ranks()[3][1]);
+      } else {
+        st.change_money(500);
+        st.change_amount(0);
+      }
     }
   }
 }
@@ -828,7 +876,26 @@ function move_result() {
     gm.set_get_tm(true);
     gm.end_cd = false;
     rs.set_score(st.get_money());
+    if(gf.cookie_able) {
+      //save proc
+      //rs = sv.get_ranks();
+      let rs = new Array(4);
+      for(let i = 0; i < 4; i++) { rs[i] = new Array(2);}
+      rs[0][0] = st.get_money();
+      rs[0][1] = tm.get_unixtime();
+      sv.save_ranks(rs);
+    }
   }
+}
+
+function end_move_title() {
+  canvas.addEventListener("click", function(evt) {
+    var pos = getMousePosition(evt);
+    if(rs.back_title[0] <= pos.x && pos.x <= rs.back_title[0]+rs.back_title[2] && 
+      rs.back_title[1] <= pos.y && pos.y <= rs.back_title[1]+rs.back_title[3] && gf.scene == 5) {
+      gf.scene = 1;
+    }
+  }, false);
 }
  //====================================================================
 
@@ -837,7 +904,6 @@ function move_result() {
 
   let opt = sv.get_options();
   if(opt == "nodata") {
-    console.log("yep");
     if_cookie_able = sv.init_data();
     console.log(if_cookie_able);
     if(if_cookie_able) {
@@ -899,6 +965,7 @@ function draw() {
 
   } else {
     rs.show_result();
+    end_move_title();
   }
 }
 
