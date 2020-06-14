@@ -36,10 +36,10 @@ function fillRect_ar(ar) {
 
 class GameFlow {
   scene; // Title 1, Options 2, Countdown 3, InGame 4, Result 5
-  cookie_able;
+  storage_able;
   constructor() {
     this.scene = 1;
-    history.cookie_able = true;
+    this.storage_able = true;
   }
 
   get get_scene() {
@@ -397,7 +397,32 @@ class Result {
     this.score = sc;
   }
   set_ranking(ran) {
-    
+    this.ranking = ran;
+  }
+  change_dateln(ar) {
+    let rep = ar[0]+"/";
+    if(ar[1] < 10) rep += "0";
+    rep += ar[1]+"/";
+    if(ar[2] < 10) rep += "0";
+    rep += ar[2]+" ";
+    if(ar[3] < 10) rep += "0";
+    rep += ar[3]+":";
+    if(ar[4] < 10) rep += "0";
+    rep += ar[4];
+    return rep;
+  }
+  show_ranking() {
+    ctx.fillStyle = "#000000";
+    let txt = "ランキング";
+    show_text(txt, can_w(1.0/5.0)/txt.length, can_w(1.0/2), can_h(12.0/30));
+    let numsize = can_w(1.0/17.5);
+    for(let i = 0; i < 3; i++) {
+      let txth = can_h((16.5 + i*3.25)/30);
+      show_text(i+1+".", numsize, can_w(3.5/30), txth);
+      show_text_left(this.ranking[i][0], numsize, can_w(6.0/30), txth);
+      let dateln = this.change_dateln(this.ranking[i][1]);
+      show_text_left(dateln, numsize, can_w(12.5/30), txth);
+    }
   }
   show_result() {
     let txts = ["今回のスコア", "タイトルに戻る"];
@@ -407,7 +432,7 @@ class Result {
     }
     ctx.fillStyle = "#000000";
     show_text(txts[0], txtsizes[0], can_w(1.0/2), can_h(3.0/30));
-    show_text(this.score, can_w(1.0/10), can_w(1.0/2), can_h(10.0/30));
+    show_text(this.score, can_w(1.0/10), can_w(1.0/2), can_h(8.0/30));
 
     this.back_title = [can_w(16.0/30), can_h(26.0/30), can_w(13.0/30), can_h(3.0/30)];
     ctx.fillStyle = "#FFFFFF";
@@ -416,81 +441,59 @@ class Result {
     strokeRect_ar(this.back_title);
     ctx.fillStyle = "#000000";
     show_text(txts[1], txtsizes[1], can_w(22.5/30), can_h(28.0/30));
+
+    this.show_ranking();
   }
 }
 
 class SaveData {
-  write_cookie(nam,val){
-    if(navigator.cookieEnabled){
-      var date = new Date();
-
-      date.setTime(date.getTime() + 365*24*60*60*1000);
-
-      document.cookie = nam+"="+escape(val)+";expires="+date.toGMTString();
-
+  write_storage(nam,val){
+    if(window.localStorage){
+      localStorage.setItem(nam,val);
       return true;
     }else{
       return false;
     }
   }
-  read_cookie(nam){
-    if(navigator.cookieEnabled){
-      var cook = document.cookie + ";";
-      var cStart, cEnd;
-      nam = nam+"=";
-
-      cStart = cook.indexOf(nam,0);
-
-      if(cStart == -1){
-        return "nodata";
-      }else{
-        cEnd = cook,indexOf(";",cStart);
-        return unescape(cook.substring(cStart.nam.length, cEnd));
-      }
+  read_storage(nam){
+    if(window.localStorage){
+      let loadData = localStorage.getItem(nam);
+      return loadData;
     }else{
-      return "nodata";
+      return null;
     }
   }
 
   init_data(){
-    let b1 = this.write_cookie("scores","");
-    let b2 = this.write_cookie("dates","");
-    let b3 = this.write_cookie("options", "");
+    let b1 = this.write_storage("ranks","");
+    let b2 = this.write_storage("options","");
+    let b3 = this.write_storage("endress","");
     return b1 && b2 && b3;
   }
 
   get_ranks(){
-    var scores = this.read_cookie("scores");
-    var dates = this.read_cookie("dates");
-    scores = scores.split(",");
-    dates = dates.split(",");
-    var gotrank = new Array(4);    
-    for(var i=0;i<4;i++) {
-      gotrank[i] = new Array(2);
-      gotrank[i][0] = Number(scores[i]);
-      gotrank[i][1] = Number(dates[i]);
-    }
-
+    var gotrank = JSON.parse(localStorage.getItem("ranks"));
     return gotrank;
   }
   get_options(){
-    var gotopt = this.read_cookie("options");
-    return Number(gotopt);
+    var gotopt = this.read_storage("options");
+    return gotopt;
   }
 
   save_ranks(rs){
-    var sav_score="";
-    var sav_date="";
-    for(var i=0; i<4; i++){
-      sav_score += ""+rs[i][0];
-      sav_date  += ""+rs[i][1];
-      if(i!=rs[0].length-1){sav_score += ",";sav_date += ",";}
-    }
-    this.write_cookie("scores",sav_score);
-    this.write_cookie("dates",sav_date);
+    this.write_storage("ranks",JSON.stringify(rs));
   }
   save_options(op){
-    this.write_cookie("options", ""+op);
+    this.write_storage("options",op);
+  }
+  save_endress(money,amount){
+    var dat = new Array();
+    dat[0]=money;
+    dat[1]=amount;
+    this.write_storage("endress",JSON.stringify(dat));
+  }
+  get_endress(){
+    return JSON.parse(this.read_storage("endress"));
   }
 }
 
@@ -504,19 +507,17 @@ class Times {
     var date = new Date();
     return date.getTime() - this.start_time;
   }
-  get_curtime(){
-    var date = new Date();
-    var ret = new Array();
-    ret[0] = date.getFullYear();
-    ret[1] = date.getMonth();
-    ret[2] = date.getDay();
-    ret[3] = date.getHours();
-    ret[4] = date.getMinutes();
-    return ret;
-  }
   get_unixtime() {
     let date = new Date();
     return date.getTime();
+  }
+  change_date(utime){
+    var date = new Date(utime);
+    var ret = new Array();
+    let sec;
+    [ret[0],ret[1],ret[2]] = date.toLocaleDateString().split("/").map(e => parseInt(e));
+    [ret[3], ret[4], sec] = date.toLocaleTimeString().split(":").map(e => parseInt(e));
+    return ret;
   }
 }
 
@@ -705,7 +706,7 @@ function move_options() {
 function move_countdown() {
   canvas.addEventListener("click", function(evt) {
     var pos = getMousePosition(evt);
-    if(tt.cdlx <= pos.x && pos.x <= tt.cdlx+canvas.width*tt.cddx/10 && 
+    if(tt.cdlx <= pos.x && pos.x <= tt.cdlx+canvas.width*tt.cddx/10 &&
       tt.cduy <= pos.y && pos.y <= tt.cduy+canvas.height*tt.cddy/10 && gf.scene == 1) {
       gf.scene = 3;
       cd.set_get_tm(true);
@@ -720,7 +721,7 @@ function move_title() {
     if(op.ttlx <= pos.x && pos.x <= op.ttlx+canvas.width*op.ttdx/10 && 
       op.ttuy <= pos.y && pos.y <= op.ttuy+canvas.height*op.ttdy/10 && gf.scene == 2) {
       gf.scene = 1;
-      sv.save_options(op.mode);
+      if(gf.storage_able) sv.save_options(op.mode);
     } 
   }, false);
 }
@@ -732,7 +733,7 @@ function change_options_move_title() {
       ch_opt = false;
       op.mode = (op.mode % 2) + 1;
       gf.scene = 1;
-      sv.save_options(op.mode);
+      if(gf.storage_able) sv.save_options(op.mode);
     } 
   }, false);
 }
@@ -748,9 +749,9 @@ function move_game() {
     if(gm.mode == 1) {
       st.change_money(500);
     } else if(gm.mode == 2) {
-      if(gf.cookie_able) {
-        st.change_money(sv.get_ranks()[3][0]);
-        st.change_amount(sv.get_ranks()[3][1]);
+      if(gf.storage_able) {
+        st.change_money(sv.get_endress()[0]);
+        st.change_amount(sv.get_endress()[1]);
       } else {
         st.change_money(500);
         st.change_amount(0);
@@ -862,10 +863,7 @@ function pause_move_title() {
     if(gm.back_title[0] <= pos.x && pos.x <= gm.back_title[0]+gm.back_title[2] && 
       gm.back_title[1] <= pos.y && pos.y <= gm.back_title[1]+gm.back_title[3] && gf.scene == 4) {
       gf.scene = 1;
-      ranks = sv.get_ranks();
-      ranks[3][0] = st.money;
-      ranks[3][1] = st.amount;
-      sv.save_ranks(ranks);
+      sv.save_endress(st.get_money(), st.get_amount());
     }
   }, false);
 }
@@ -876,14 +874,27 @@ function move_result() {
     gm.set_get_tm(true);
     gm.end_cd = false;
     rs.set_score(st.get_money());
-    if(gf.cookie_able) {
-      //save proc
-      //rs = sv.get_ranks();
-      let rs = new Array(4);
-      for(let i = 0; i < 4; i++) { rs[i] = new Array(2);}
-      rs[0][0] = st.get_money();
-      rs[0][1] = tm.get_unixtime();
-      sv.save_ranks(rs);
+    //sort
+    if(gf.storage_able) {
+      let rk = sv.get_ranks();
+      for(let i = 2; i >= 0; i--) {
+        if(rk[i][0] < st.get_money()) {
+          if(i < 2) {
+            let tmp = rk[i][0];
+            rk[i][0] = st.get_money();
+            rk[i+1][0] = tmp;
+            tmp = rk[i][1];
+            rk[i][1] = tm.get_unixtime();
+            rk[i+1][1] = tmp;
+          } else {
+            rk[i][0] = st.get_money();
+            rk[i][1] = tm.get_unixtime();
+          }
+        } 
+      }
+      sv.save_ranks(rk);
+      for(let i = 0; i < 3; i++) { rk[i][1] = tm.change_date(rk[i][1]);}
+      rs.set_ranking(rk);
     }
   }
 }
@@ -903,24 +914,22 @@ function end_move_title() {
   ws.fitCanvas();
 
   let opt = sv.get_options();
-  if(opt == "nodata") {
-    if_cookie_able = sv.init_data();
-    console.log(if_cookie_able);
-    if(if_cookie_able) {
+  if(opt == "nodata" || opt == "") {
+    if_storage_able = sv.init_data();
+    if(if_storage_able) {
       let ar = new Array(4);
-      for(let i = 0; i < 4; i++) { ar[i] = new Array(2).fill(0);}
-      ar[3][0] = 500;
+      for(let i = 0; i < 3; i++) { ar[i] = new Array(2).fill(0);}
       sv.save_ranks(ar);
-
-      opt = 1;
-      sv.save_options(opt);
-      op.change_mode(opt);
+      sv.save_endress([500,0]);
+      sv.save_options(1);
+      op.change_mode(1);
     } else {
-      gf.cookie_able = false;
+      gf.storage_able = false;
       op.change_mode(1);
     }
+  } else {
+    op.change_mode(opt);
   }
-  op.change_mode(opt);
   if(isNaN(sv.get_options())) {
     gf.cookie_able = false;
     op.change_mode(1);
